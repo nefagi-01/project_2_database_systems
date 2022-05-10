@@ -57,7 +57,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
    */
   def getKeywordQueryResult(keywords : List[String]) : Double = {
 
-    val filteredByKeywords = state.filter(rating => rating._3.containsSlice(keywords))
+    val filteredByKeywords = state.filter(rating => keywords.forall(rating._3.contains(_)))
     if (filteredByKeywords.count() == 0) -1.0
     else {
       val filteredByRating = filteredByKeywords.filter(rating => rating._2 > 0)
@@ -68,18 +68,6 @@ class Aggregator(sc : SparkContext) extends Serializable {
           (x,y) => (x._1+y._1, x._2+y._2)
         )
         val result = tmp._1/tmp._2
-  /*      println("\nratings:")
-        state.foreach(println(_))
-        println("\nkeywords:")
-        keywords.foreach(println(_))
-        println("\nfilteredByKeywords:")
-        filteredByKeywords.foreach(println(_))
-        println("\nfilteredByRating:")
-        filteredByRating.foreach(println(_))
-        println(filteredByRating.count())
-
-        println("\nresult:")
-        println(result)*/
         result
       }
     }
