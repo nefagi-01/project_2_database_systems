@@ -1,5 +1,4 @@
 package app.aggregator
-
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -23,33 +22,11 @@ class Aggregator(sc : SparkContext) extends Serializable {
             ratings : RDD[(Int, Int, Option[Double], Double, Int)],
             title : RDD[(Int, String, List[String])]
           ) : Unit = {
-   /* ratings.foreach(println(_))
-    val tmp1 = ratings.groupBy(tuple => (tuple._1, tuple._2))
-    println("tmp1:")
-    tmp1.foreach(println(_))
-    val tmp2 = tmp1.mapValues(values => values.toSeq.sortBy(tupleValues => tupleValues._4))
-    println("tmp2:")
-    tmp2.foreach(println(_))
-    val tmp3 = tmp2.flatMap(pair => (pair._2.head._2, pair._2.head._4).asInstanceOf[TraversableOnce[(Int,Double)]])
-    println("tmp3:")
-    tmp3.foreach(println(_))
-    val tmp4 = tmp3.groupBy(tuple => tuple._1).mapValues(ratings => ratings.aggregate((0.asInstanceOf[Double], 0))(
-      (x,y) => (x._1+(y._2), x._2 + 1),
-      (x,y) => (x._1+y._1, x._2+y._2)
-    ))
-    println("tmp4:")
-    tmp4.foreach(println(_))
-    val tmp5 = tmp4.flatMap(pair => (pair._1, pair._2._1/pair._2._2).asInstanceOf[TraversableOnce[(Int, Double)]])
-    println("tmp5:")
-    tmp5.foreach(println(_))
-    val tmp6 = tmp5.map(pair => (pair._1, pair))
-    println("tmp6:")
-    tmp6.foreach(println(_))
-    println("--------------------------------------------")*/
-    val averageRating = ratings.groupBy(tuple => (tuple._1, tuple._2)).mapValues(values => values.toSeq.sortBy(tupleValues => tupleValues._4)).flatMap(pair => (pair._2.head._2, pair._2.head._4).asInstanceOf[TraversableOnce[(Int,Double)]]).groupBy(tuple => tuple._1).mapValues(ratings => ratings.aggregate((0.asInstanceOf[Double], 0))(
+
+    val averageRating = ratings.groupBy(tuple => (tuple._1, tuple._2)).mapValues(values => values.toSeq.sortBy(tupleValues => tupleValues._4)).flatMap(pair => (pair._2)).map(tuple => (tuple._2, tuple._4)).groupBy(tuple => tuple._1).mapValues(ratings => ratings.aggregate((0.asInstanceOf[Double], 0))(
       (x,y) => (x._1+y._2, x._2 + 1),
       (x,y) => (x._1+y._1, x._2+y._2)
-    )).flatMap(pair => (pair._1, pair._2._1/pair._2._2).asInstanceOf[TraversableOnce[(Int, Double)]]).map(pair => (pair._1, pair))
+    )).map(pair => (pair._1, pair._2._1/pair._2._2)).map(pair => (pair._1, pair))
     val title2 = title.map(tuple => (tuple._1, tuple))
     val join = title2.leftOuterJoin(averageRating).map(result => (result._2._1._2, result._2._2 match {
       case Some(x) => x._2
@@ -57,7 +34,6 @@ class Aggregator(sc : SparkContext) extends Serializable {
     }, result._2._1._3))
 
     state = join
-
     state.persist()
   }
 
@@ -79,7 +55,33 @@ class Aggregator(sc : SparkContext) extends Serializable {
    * @return The average rating for the given keywords. Return 0.0 if no
    *         such titles are rated and -1.0 if no such titles exist.
    */
-  def getKeywordQueryResult(keywords : List[String]) : Double = ???
+  def getKeywordQueryResult(keywords : List[String]) : Double = {
+
+    val filteredByKeywords = state.filter(rating => rating._3.containsSlice(keywords))
+    if (filteredByKeywords.count() == 0) -1.0
+    else {
+      val filteredByRating = filteredByKeywords.filter(rating => rating._2 > 0)
+      if (filteredByKeywords.count() == 0) 0.0
+      else {
+        val tmp = filteredByRating.aggregate((0.asInstanceOf[Double], 0))(
+          (x,y) => (x._1+y._2, x._2 + 1),
+          (x,y) => (x._1+y._1, x._2+y._2)
+        )
+        val result = tmp._1/tmp._2
+        println("\nratings:")
+        state.foreach(println(_))
+        println("\nkeywords:")
+        keywords.foreach(println(_))
+        println("\nfilteredByKeywords:")
+        filteredByKeywords.foreach(println(_))
+        println("\nfilteredByRating:")
+        filteredByRating.foreach(println(_))
+        println("\nresult:")
+        println(result)
+        result
+      }
+    }
+  }
 
   /**
    * Use the "delta"-ratings to incrementally maintain the aggregate ratings
