@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="362c7e83-9e2f-45d8-988c-4d55504e2a93" name="Changes" comment="Task 2.1">
+    <list default="true" id="362c7e83-9e2f-45d8-988c-4d55504e2a93" name="Changes" comment="Task 2.2">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/app/aggregator/Aggregator.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/app/aggregator/Aggregator.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/app/aggregator/RatingsLoader.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/app/aggregator/RatingsLoader.scala" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -133,7 +132,14 @@
       <option name="project" value="LOCAL" />
       <updated>1652166462099</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Task 2.2">
+      <created>1652171279663</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1652171279663</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -149,6 +155,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Task 2.1" />
-    <option name="LAST_COMMIT_MESSAGE" value="Task 2.1" />
+    <MESSAGE value="Task 2.2" />
+    <option name="LAST_COMMIT_MESSAGE" value="Task 2.2" />
   </component>
 </project>

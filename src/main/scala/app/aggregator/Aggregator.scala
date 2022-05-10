@@ -68,7 +68,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
           (x,y) => (x._1+y._1, x._2+y._2)
         )
         val result = tmp._1/tmp._2
-        println("\nratings:")
+  /*      println("\nratings:")
         state.foreach(println(_))
         println("\nkeywords:")
         keywords.foreach(println(_))
@@ -76,8 +76,10 @@ class Aggregator(sc : SparkContext) extends Serializable {
         filteredByKeywords.foreach(println(_))
         println("\nfilteredByRating:")
         filteredByRating.foreach(println(_))
+        println(filteredByRating.count())
+
         println("\nresult:")
-        println(result)
+        println(result)*/
         result
       }
     }
