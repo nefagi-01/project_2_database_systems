@@ -80,15 +80,15 @@ class Aggregator(sc : SparkContext) extends Serializable {
    * @param delta Delta ratings that haven't been included previously in aggregates
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
-    /*println("\ndelta list:")
-    delta_.foreach(println(_))*/
+    println("\ndelta list:")
+    delta_.foreach(println(_))
     delta_.foreach(newRating => {
-     /* println("\ndelta sample:")
+      println("\ndelta sample:")
       println(newRating)
       println("\nlastRating before update")
-      lastRating.foreach(println(_))*/
+      lastRating.foreach(println(_))
       //Check if exists in lastRating
-      if (lastRating.filter(rating => rating._1 == newRating._1 && rating._2 == newRating._2).count() > 0){
+      if (lastRating.filter(rating => rating._1 == newRating._1 && rating._2 == newRating._2 && rating._5 < newRating._5).count() > 0){
         //User already rated this film
 
         //Update lastRating
@@ -106,8 +106,8 @@ class Aggregator(sc : SparkContext) extends Serializable {
         //Append new rating to lastRating
         lastRating = lastRating.union(sc.parallelize(Seq(newRating)))
       }
-      /*println("\nlastRating after update")
-      lastRating.foreach(println(_))*/
+      println("\nlastRating after update")
+      lastRating.foreach(println(_))
       //Recompute average for the film
       val newAverage = lastRating.filter(rating => rating._2 == newRating._2).map(tuple => (tuple._2, tuple._4)).groupBy(tuple => tuple._1).mapValues(ratings => ratings.aggregate((0.asInstanceOf[Double], 0))(
         (x,y) => (x._1+y._2, x._2 + 1),
@@ -115,17 +115,17 @@ class Aggregator(sc : SparkContext) extends Serializable {
       )).map(pair => (pair._1, pair._2._1/pair._2._2)).map(pair => (pair._1, pair)).collect().head
 
 
-      /*println("\nnewAverage: ")
-      println(newAverage)*/
+      println("\nnewAverage: ")
+      println(newAverage)
 
-      /*println("\nstate before update:")
-      state.foreach(println(_))*/
+      println("\nstate before update:")
+      state.foreach(println(_))
       state = state.map(tuple => {
         if (tuple._1 == newAverage._1) (tuple._1, tuple._2, newAverage._2._2, tuple._4)
         else tuple
       })
-      /*println("\nstate after update:")
-      state.foreach(println(_))*/
+      println("\nstate after update:")
+      state.foreach(println(_))
       state.persist()
     })
   }
