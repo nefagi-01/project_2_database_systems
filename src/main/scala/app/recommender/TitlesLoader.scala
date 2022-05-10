@@ -16,5 +16,14 @@ class TitlesLoader(sc : SparkContext, path : String) extends Serializable {
    *
    * @return The RDD for the given titles
    */
-  def load(): RDD[(Int, String, List[String])] = ???
+  def load(): RDD[(Int, String, List[String])] = {
+    val fileRdd = sc.textFile("src/main/resources/" + path)
+    val data = fileRdd.map{row => {
+      val values : List[String] = row.split('|').toList
+      (values.head.toInt, values(1), values.drop(2))
+    }}
+    data.persist()
+    data
+
+  }
 }
