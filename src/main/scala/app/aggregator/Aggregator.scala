@@ -23,7 +23,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
             ratings : RDD[(Int, Int, Option[Double], Double, Int)],
             title : RDD[(Int, String, List[String])]
           ) : Unit = {
-    lastRating = ratings.groupBy(tuple => (tuple._1, tuple._2)).mapValues(values => values.toSeq.sortBy(tupleValues => tupleValues._4)).flatMap(pair => (pair._2))
+    lastRating = ratings.groupBy(tuple => (tuple._1, tuple._2)).mapValues(values => values.toSeq.sortBy(_._5)(Ordering[Int].reverse)).map(pair => pair._2.head)
     val averageRating = lastRating.map(tuple => (tuple._2, tuple._4)).groupBy(tuple => tuple._1).mapValues(ratings => ratings.aggregate((0.asInstanceOf[Double], 0))(
       (x,y) => (x._1+y._2, x._2 + 1),
       (x,y) => (x._1+y._1, x._2+y._2)
