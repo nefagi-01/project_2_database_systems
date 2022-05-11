@@ -82,7 +82,6 @@ class Aggregator(sc : SparkContext) extends Serializable {
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
     delta_.foreach(newRating => {
-      state.unpersist()
       state = state.map(rating => {
         if (rating._1 == newRating._2) {
           if (newRating._3.isEmpty ) {
