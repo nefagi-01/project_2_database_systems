@@ -20,22 +20,9 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
    * @param sc Spark context for current application
    */
   def build(sc : SparkContext) = {
-    println("im in build")
-    println("histogram: ")
-    /*histogram.value.toSeq.foreach(println(_))
-    val n = ((histogram.value.size * 99) / 100).floor.toInt
-    val signatureCandidates = sc.parallelize(histogram.value.toSeq.sortWith(_._2 > _._2).take(n))
-    println(histogram.value.size)
-    val preCache: Map[IndexedSeq[Int], List[(Int, String, List[String])]] = lshIndex.lookup(signatureCandidates).map(el => (el._1, el._3)).collectAsMap().asInstanceOf[Map[IndexedSeq[Int], List[(Int, String, List[String])]]]
-    cache = sc.broadcast(preCache)
-    histogram = sc.broadcast(Map.empty[IndexedSeq[Int], Int])*/
     val length = histogram.collect().length
     val n = ((length * 99) / 100).floor.toInt
-    println(n)
-    println(length)
-    val preCache= lshIndex.lookup(sc.parallelize(histogram.take(n))).map(el => (el._1, el._3)).collectAsMap().toMap
-    println("preCache: ")
-    preCache.foreach(println(_))
+    val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._2 < (n-1)).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
     cache = sc.broadcast(preCache)
   }
 
@@ -62,25 +49,7 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
   : (RDD[(List[String], List[(Int, String, List[String])])], RDD[(IndexedSeq[Int], List[String])]) = {
     val signatures = lshIndex.hash(queries)
     //update histogram
-    val tmp1 = signatures.groupBy(el => el._1)
-    println("tmp1: ")
-    tmp1.foreach(println(_))
-    val tmp2 = tmp1.mapValues(values => values.size).sortBy(el => el._2, ascending = false)
-    println("tmp2: ")
-    tmp2.foreach(println(_))
-    val tmp3 = tmp2.sortBy(el => el._2, ascending = false)
-    println("tmp3: ")
-    tmp3.foreach(println(_))
-    histogram = tmp3
-    /*signatures.foreach(signature => {
-      if (histogram.value.contains(signature._1)) {
-        println("updated histogram")
-        histogram.value += (signature._1 -> (histogram(signature._1)+1))
-      } else {
-        println("added new element to histogram")
-        histogram.value += (signature._1 -> 1)
-      }
-    })*/
+    histogram = signatures.groupBy(el => el._1).mapValues(values => values.size).sortBy(el => el._2, ascending = false).sortBy(el => el._2, ascending = false)
 
     Option(cache) match {
       case Some(x) =>
