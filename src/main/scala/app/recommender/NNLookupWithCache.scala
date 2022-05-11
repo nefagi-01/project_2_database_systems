@@ -27,6 +27,7 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
     val signatureCandidates = sc.parallelize(histogram.toSeq.sortWith(_._2 > _._2).take(n))
     val preCache: Map[IndexedSeq[Int], List[(Int, String, List[String])]] = lshIndex.lookup(signatureCandidates).map(el => (el._1, el._3)).collectAsMap().asInstanceOf[Map[IndexedSeq[Int], List[(Int, String, List[String])]]]
     cache = sc.broadcast(preCache)
+    histogram = Map.empty[IndexedSeq[Int], Int]
 
   }
 
