@@ -82,22 +82,24 @@ class Aggregator(sc : SparkContext) extends Serializable {
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
     println("UPDATE")
-    delta_.foreach(newRating => {
       state.unpersist()
       state = state.map(rating => {
-        if (rating._1 == newRating._2) {
-          if (newRating._3.isEmpty ) {
-            val newAverage: Double = (rating._3*rating._4+newRating._4)/(rating._4+1)
-            (rating._1, rating._2, newAverage, rating._4+1, rating._5)
+        var result: (Int, String, Double, Int, List[String]) = null
+        delta_.foreach(newRating => {
+          if (rating._1 == newRating._2) {
+            if (newRating._3.isEmpty ) {
+              val newAverage: Double = (rating._3*rating._4+newRating._4)/(rating._4+1)
+              result = (rating._1, rating._2, newAverage, rating._4+1, rating._5)
+            }
+            else {
+              val newAverage: Double = (rating._3*rating._4+newRating._4-newRating._3.get)/(rating._4)
+              result = (rating._1, rating._2, newAverage, rating._4, rating._5)
+            }
           }
-          else {
-            val newAverage: Double = (rating._3*rating._4+newRating._4-newRating._3.get)/(rating._4)
-            (rating._1, rating._2, newAverage, rating._4, rating._5)
-          }
-        }
-        else rating
+          else result = rating
+        })
+        result
       })
       state.persist()
-    })
   }
 }
