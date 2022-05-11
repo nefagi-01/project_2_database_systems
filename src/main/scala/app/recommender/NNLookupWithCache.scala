@@ -11,23 +11,24 @@ import org.apache.spark.rdd.RDD
  */
 class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
   var cache:  Broadcast[Map[IndexedSeq[Int], List[(Int, String, List[String])]]] = null
-  var book: Map[IndexedSeq[Int], Int] = Map.empty[IndexedSeq[Int], Int]
+  var histogram: Map[IndexedSeq[Int], Int] = Map.empty[IndexedSeq[Int], Int]
 
   /**
    * The operation for building the cache
    *
    * @param sc Spark context for current application
    */
-  def build(sc : SparkContext) = ???
-  /*{
-/*
-    ListMap(grades.toSeq.sortBy(_._2):_*)
-*/  val n = ((book.keys.size*99)/100).floor.toInt
-    val signatureCandidates = book.toSeq.sortWith(_._2 > _._2).take(n)
-    signatureCandidates.foreach(signature => {
+  def build(sc : SparkContext) = {
+    val n = ((histogram.keys.size * 99) / 100).floor.toInt
+    println("histogram size:")
+    println(histogram.keys.size)
+    println("n: ")
+    println(n)
+    val signatureCandidates = sc.parallelize(histogram.toSeq.sortWith(_._2 > _._2).take(n))
+    val preCache: Map[IndexedSeq[Int], List[(Int, String, List[String])]] = lshIndex.lookup(signatureCandidates).map(el => (el._1, el._3)).collectAsMap().asInstanceOf[Map[IndexedSeq[Int], List[(Int, String, List[String])]]]
+    cache = sc.broadcast(preCache)
 
-    })
-  }*/
+  }
 
   /**
    * Testing operation: force a cache based on the given object
@@ -50,7 +51,18 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
    */
   def cacheLookup(queries: RDD[List[String]])
   : (RDD[(List[String], List[(Int, String, List[String])])], RDD[(IndexedSeq[Int], List[String])]) = {
+    println("alive0")
     val signatures = lshIndex.hash(queries)
+    println("alive1")
+    //update histogram
+    signatures.foreach(signature => {
+      if (histogram.contains(signature._1)) {
+        histogram += (signature._1 -> (histogram(signature._1)+1))
+      } else {
+        histogram += (signature._1 -> 1)
+      }
+    })
+    println("alive2")
     if (cache == null){
       (null, signatures)
     } else {
@@ -68,23 +80,17 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
    */
   def lookup(queries: RDD[List[String]])
   : RDD[(List[String], List[(Int, String, List[String])])] = {
+    println("im here")
+    println("cache: ")
+    cache.value.foreach(println(_))
     val (cacheHit, cacheMiss) = cacheLookup(queries)
     val cacheMissResult = lshIndex.lookup(cacheMiss).map(result => (result._2, result._3))
+    println("aa")
     if (cacheHit.isEmpty() || cacheHit == null) {
        cacheMissResult
     }
     else {
        cacheHit ++ cacheMissResult
     }
-    /*val signatures = lshIndex.hash(queries)
-    signatures.foreach(signature => {
-      if (book.contains(signature._1)) {
-        book += (signature._1 -> (book(signature._1)+1))
-      } else {
-        book += (signature._1 -> 1)
-      }
-    })*/
-
-
   }
 }
