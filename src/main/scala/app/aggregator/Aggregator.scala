@@ -62,8 +62,8 @@ class Aggregator(sc : SparkContext) extends Serializable {
     val filteredByKeywords = state.filter(rating => keywords.forall(rating._5.contains(_)))
     if (filteredByKeywords.count() == 0) -1.0
     else {
-      val filteredByRating = filteredByKeywords.filter(rating => rating._4 > 0)
-      if (filteredByKeywords.count() == 0) 0.0
+      val filteredByRating = filteredByKeywords.filter(rating => rating._3 > 0.0)
+      if (filteredByRating.count() == 0) 0.0
       else {
         val tmp = filteredByRating.aggregate((0.asInstanceOf[Double], 0))(
           (x,y) => (x._1+y._3, x._2 + 1),
@@ -81,6 +81,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
    * @param delta Delta ratings that haven't been included previously in aggregates
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
+      getResult().foreach(println(_))
       println("UPDATE:")
       var myDelta = delta_
       state.unpersist()
