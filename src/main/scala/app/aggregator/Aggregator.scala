@@ -89,7 +89,31 @@ class Aggregator(sc : SparkContext) extends Serializable {
       println("\nstate before:")
       state.foreach(println(_))
       state = state.map(rating => {
-         myDelta.find(x => x._2 == rating._1) match {
+        val titleUpdate = myDelta.filter(newRating => newRating._2 == rating._1)
+        var baseRating = rating
+        if (titleUpdate.length > 0) {
+          for (newRating <- titleUpdate) {
+            if (newRating._3.isEmpty) {
+              val newAverage: Double = (baseRating._3 * baseRating._4 + newRating._4) / (baseRating._4 + 1)
+              baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4 + 1, baseRating._5)
+            }
+            else {
+              val newAverage: Double = (baseRating._3 * baseRating._4 + newRating._4 - newRating._3.get) / (baseRating._4)
+              baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4, baseRating._5)
+            }
+          }
+        }
+        baseRating
+      }
+      )
+      println("\nstate after:")
+      state.foreach(println(_))
+      state.persist()
+  }
+}
+
+
+/*myDelta.find(x => x._2 == rating._1) match {
           case Some(newRating) => {
             myDelta = myDelta diff List(newRating)
             if (newRating._3.isEmpty) {
@@ -102,12 +126,4 @@ class Aggregator(sc : SparkContext) extends Serializable {
             }
           }
           case None => rating
-        }
-
-      }
-      )
-      println("\nstate after:")
-      state.foreach(println(_))
-      state.persist()
-  }
-}
+        }*/
