@@ -574,10 +574,13 @@ class MainTest {
       .reduceByKey(_ + _)
       .map(t => (t.toString(), 1))
 
-    assert(res.count() == res.join(expected).count())
 
+    assert(res.count() == res.join(expected).count())
+    println("first-passed")
     assert((aggregator.getKeywordQueryResult(List("independent-film")) - 2.9977).abs < 0.001)
+    println("second-passed")
     assert((aggregator.getKeywordQueryResult(List("cartoon")) - 3.1666).abs < 0.001)
+    println("last-passed")
   }
 
   @Test
