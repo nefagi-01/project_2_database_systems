@@ -81,9 +81,13 @@ class Aggregator(sc : SparkContext) extends Serializable {
    * @param delta Delta ratings that haven't been included previously in aggregates
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
-    println("UPDATE")
+      println("UPDATE:")
       var myDelta = delta_
       state.unpersist()
+      println("\ndelta_: ")
+      delta_.foreach(println(_))
+      println("\nstate before:")
+      state.foreach(println(_))
       state = state.map(rating => {
          myDelta.find(x => x._2 == rating._1) match {
           case Some(newRating) => {
@@ -102,6 +106,8 @@ class Aggregator(sc : SparkContext) extends Serializable {
 
       }
       )
+      println("\nstate after:")
+      state.foreach(println(_))
       state.persist()
   }
 }
