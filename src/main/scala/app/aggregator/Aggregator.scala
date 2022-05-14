@@ -85,10 +85,10 @@ class Aggregator(sc : SparkContext) extends Serializable {
 
       var myDelta = delta_
 
-      println("\ndelta_: ")
-      delta_.foreach(println(_))
-      println("\nstate before:")
-      state.foreach(println(_))
+      println("\ndelta_ first 30: ")
+      delta_.sortBy(x => x._2).zipWithIndex.filter(x => x._2 < 30).foreach(println(_))
+      println("\nstate before first 30 :")
+      state.sortBy(x => x._1).zipWithIndex.filter(x => x._2 < 30).foreach(println(_))
       val result = state.map(rating => {
         val titleUpdate = myDelta.filter(newRating => newRating._2 == rating._1)
         var baseRating = rating
@@ -107,10 +107,8 @@ class Aggregator(sc : SparkContext) extends Serializable {
         baseRating
       }
       )
-      println("\nstate after:")
-      result.foreach(println(_))
-      println("keyword ('fantasy','jedi') result:")
-      println(getKeywordQueryResult(List("fantasy", "jedi")))
+      println("\nstate after first 30 :")
+      result.sortBy(x => x._1).zipWithIndex.filter(x => x._2 < 30).foreach(println(_))
       state.unpersist()
       state = result
       state.persist()

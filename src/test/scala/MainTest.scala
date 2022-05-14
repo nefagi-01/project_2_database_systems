@@ -574,13 +574,10 @@ class MainTest {
       .reduceByKey(_ + _)
       .map(t => (t.toString(), 1))
 
-
     assert(res.count() == res.join(expected).count())
-    println("first-passed")
+
     assert((aggregator.getKeywordQueryResult(List("independent-film")) - 2.9977).abs < 0.001)
-    println("second-passed")
     assert((aggregator.getKeywordQueryResult(List("cartoon")) - 3.1666).abs < 0.001)
-    println("last-passed")
   }
 
   @Test
@@ -621,7 +618,7 @@ class MainTest {
       .map(x => x.split('|'))
       .map(x => (x(0), (x(1).toDouble*1000).toInt))
       .map(x => (x.toString(), 1))
-      .reduceByKey(_ + _)
+        .reduceByKey(_ + _)
       .map(t => (t.toString(), 1))
 
     assert(res.count() == res.join(expected).count())
