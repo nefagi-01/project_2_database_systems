@@ -81,8 +81,6 @@ class Aggregator(sc : SparkContext) extends Serializable {
    * @param delta Delta ratings that haven't been included previously in aggregates
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
-      getResult().foreach(println(_))
-
       var myDelta = delta_
 
       println("\ndelta_ first 30: ")
