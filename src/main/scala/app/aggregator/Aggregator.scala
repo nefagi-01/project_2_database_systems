@@ -97,7 +97,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
               baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4 + 1, baseRating._5)
             }
             else {
-              val newAverage: Double = (((baseRating._3 * baseRating._4 + newRating._4 - newRating._3.get) / (baseRating._4))*1000).round/1000.0
+              val newAverage: Double = (((baseRating._3 * baseRating._4 + (newRating._4 - newRating._3.get)) / (baseRating._4))*1000).round/1000.0
               baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4, baseRating._5)
             }
           }
