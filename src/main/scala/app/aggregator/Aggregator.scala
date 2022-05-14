@@ -93,11 +93,11 @@ class Aggregator(sc : SparkContext) extends Serializable {
         if (titleUpdate.length > 0) {
           for (newRating <- titleUpdate) {
             if (newRating._3.isEmpty) {
-              val newAverage: Double = (baseRating._3 * baseRating._4 + newRating._4) / (baseRating._4 + 1)
+              val newAverage: Double = (((baseRating._3 * baseRating._4 + newRating._4) / (baseRating._4 + 1))*10000).round/10000.0
               baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4 + 1, baseRating._5)
             }
             else {
-              val newAverage: Double = (baseRating._3 * baseRating._4 + newRating._4 - newRating._3.get) / (baseRating._4)
+              val newAverage: Double = (((baseRating._3 * baseRating._4 + newRating._4 - newRating._3.get) / (baseRating._4))*10000).round/10000.0
               baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4, baseRating._5)
             }
           }
