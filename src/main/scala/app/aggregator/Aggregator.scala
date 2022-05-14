@@ -109,7 +109,8 @@ class Aggregator(sc : SparkContext) extends Serializable {
       )
       println("\nstate after:")
       state.foreach(println(_))
-      state.unpersist()
+      println("keyword ('fantasy','jedi') result:")
+      println(getKeywordQueryResult(List("fantasy", "jedi")))
       state.persist()
   }
 }
