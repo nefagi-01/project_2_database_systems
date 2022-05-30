@@ -25,7 +25,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
     val averageRating = ratings.groupBy(tuple => (tuple._1, tuple._2)).mapValues(values => values.toSeq.sortBy(_._5)(Ordering[Int].reverse)).map(pair => pair._2.head).map(tuple => (tuple._2, tuple._4)).groupBy(tuple => tuple._1).mapValues(ratings => ratings.aggregate((0.asInstanceOf[Double], 0))(
       (x,y) => (x._1+y._2, x._2 + 1),
       (x,y) => (x._1+y._1, x._2+y._2)
-    )).map(pair => (pair._1, pair._2._1/pair._2._2, pair._2._2)).map(pair => (pair._1, pair))
+    )).map(pair => (pair._1, pair._2._1, pair._2._2)).map(pair => (pair._1, pair))
     val title2 = title.map(tuple => (tuple._1, tuple))
     val join = title2.leftOuterJoin(averageRating).map(result => (result._1,result._2._1._2, result._2._2 match {
       case Some(x) => x._2
@@ -45,7 +45,15 @@ class Aggregator(sc : SparkContext) extends Serializable {
    * @return The pairs of titles and ratings
    */
   def getResult() : RDD[(String, Double)] = {
-    state.map(tuple => (tuple._2, tuple._3))
+    val result = state.map(tuple => {
+      if (tuple._4 == 0){
+        (tuple._2, 0.0)
+      } else {
+        (tuple._2, tuple._3 / tuple._4)
+      }
+    })
+    result.foreach(println(_))
+    return result
   }
 
   /**
@@ -82,32 +90,24 @@ class Aggregator(sc : SparkContext) extends Serializable {
    */
   def updateResult(delta_ : Array[(Int, Int, Option[Double], Double, Int)]) : Unit = {
       var myDelta = delta_
-
-      println("\ndelta_ first 30: ")
-      delta_.sortBy(x => x._2).zipWithIndex.filter(x => x._2 < 30).foreach(println(_))
-      println("\nstate before first 30 :")
-      state.sortBy(x => x._1).zipWithIndex.filter(x => x._2 < 30).foreach(println(_))
       val result = state.map(rating => {
         val titleUpdate = myDelta.filter(newRating => newRating._2 == rating._1)
         var baseRating = rating
         if (titleUpdate.length > 0) {
           for (newRating <- titleUpdate) {
             if (newRating._3.isEmpty) {
-              val newAverage: Double = (((baseRating._3 * baseRating._4 + newRating._4) / (baseRating._4 + 1))*1000).round/1000.0
-              baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4 + 1, baseRating._5)
+              val newTotal: Double = ((baseRating._3 + newRating._4))
+              baseRating = (baseRating._1, baseRating._2, newTotal, baseRating._4 + 1, baseRating._5)
             }
             else {
-              val newAverage: Double = (((baseRating._3 * baseRating._4 + (newRating._4 - newRating._3.get)) / (baseRating._4))*1000).round/1000.0
-              baseRating = (baseRating._1, baseRating._2, newAverage, baseRating._4, baseRating._5)
+              val newTotal: Double = (baseRating._3  + (newRating._4 - newRating._3.get))
+              baseRating = (baseRating._1, baseRating._2, newTotal, baseRating._4, baseRating._5)
             }
           }
         }
         baseRating
       }
       )
-      println("\nstate after first 30 :")
-      result.sortBy(x => x._1).zipWithIndex.filter(x => x._2 < 30).foreach(println(_))
-      state.unpersist()
       state = result
       state.persist()
   }
