@@ -112,19 +112,3 @@ class Aggregator(sc : SparkContext) extends Serializable {
       state.persist()
   }
 }
-
-
-/*myDelta.find(x => x._2 == rating._1) match {
-          case Some(newRating) => {
-            myDelta = myDelta diff List(newRating)
-            if (newRating._3.isEmpty) {
-              val newAverage: Double = (rating._3 * rating._4 + newRating._4) / (rating._4 + 1)
-              (rating._1, rating._2, newAverage, rating._4 + 1, rating._5)
-            }
-            else {
-              val newAverage: Double = (rating._3 * rating._4 + newRating._4 - newRating._3.get) / (rating._4)
-              (rating._1, rating._2, newAverage, rating._4, rating._5)
-            }
-          }
-          case None => rating
-        }*/
