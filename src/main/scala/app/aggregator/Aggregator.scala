@@ -110,5 +110,6 @@ class Aggregator(sc : SparkContext) extends Serializable {
       )
       state = result
       state.persist()
+    //test pipeline
   }
 }
