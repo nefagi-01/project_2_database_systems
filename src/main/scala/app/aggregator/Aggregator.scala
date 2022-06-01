@@ -70,11 +70,11 @@ class Aggregator(sc : SparkContext) extends Serializable {
     val filteredByKeywords = state.filter(rating => keywords.forall(rating._5.contains(_)))
     if (filteredByKeywords.count() == 0) -1.0
     else {
-      val filteredByRating = filteredByKeywords.filter(rating => rating._3 > 0.0)
+      val filteredByRating = filteredByKeywords.filter(rating => rating._4 > 0.0)
       if (filteredByRating.count() == 0) 0.0
       else {
         val tmp = filteredByRating.aggregate((0.asInstanceOf[Double], 0))(
-          (x,y) => (x._1+y._3, x._2 + 1),
+          (x,y) => (x._1+(y._3/y._4), x._2 + 1),
           (x,y) => (x._1+y._1, x._2+y._2)
         )
         val result = tmp._1/tmp._2
