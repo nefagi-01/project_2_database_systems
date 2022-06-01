@@ -23,6 +23,8 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
     val total = histogram.map(tuple => tuple._2).sum()
     val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._1._2 / total > 0.01).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
     cache = sc.broadcast(preCache)
+    //reset histogram
+    histogram = null
   }
 
   /**

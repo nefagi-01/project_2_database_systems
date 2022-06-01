@@ -52,8 +52,7 @@ class Aggregator(sc : SparkContext) extends Serializable {
         (tuple._2, tuple._3 / tuple._4)
       }
     })
-    result.foreach(println(_))
-    return result
+    result
   }
 
   /**
@@ -110,6 +109,5 @@ class Aggregator(sc : SparkContext) extends Serializable {
       )
       state = result
       state.persist()
-    //test pipeline
   }
 }
