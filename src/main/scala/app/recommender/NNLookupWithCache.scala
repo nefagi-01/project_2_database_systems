@@ -21,8 +21,14 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
    */
   def build(sc : SparkContext) = {
     val length = histogram.collect().length
+    histogram.foreach(println(_))
+    val total = histogram.map(tuple => tuple._2).sum()
+    println(total)
     val n = ((length * 99) / 100).floor.toInt
+/*
     val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._2 < (n-1)).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
+*/
+    val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._1._2 / total > 0.01).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
     cache = sc.broadcast(preCache)
   }
 
@@ -49,7 +55,7 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
   : (RDD[(List[String], List[(Int, String, List[String])])], RDD[(IndexedSeq[Int], List[String])]) = {
     val signatures = lshIndex.hash(queries)
     //update histogram
-    histogram = signatures.groupBy(el => el._1).mapValues(values => values.size).sortBy(el => el._2, ascending = false).sortBy(el => el._2, ascending = false)
+    histogram = signatures.groupBy(el => el._1).mapValues(values => values.size).sortBy(el => el._2, ascending = false)
 
     Option(cache) match {
       case Some(x) =>
