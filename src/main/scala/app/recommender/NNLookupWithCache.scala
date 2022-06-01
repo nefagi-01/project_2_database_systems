@@ -20,9 +20,9 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
    * @param sc Spark context for current application
    */
   def build(sc : SparkContext) = {
-    var total = 0
-    histogram.foreach(total += _._2)
-    val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._2/total >= 0.01).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
+    val length = histogram.collect().length
+    val n = ((length * 99) / 100).floor.toInt
+    val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._2 < (n-1)).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
     cache = sc.broadcast(preCache)
   }
 
