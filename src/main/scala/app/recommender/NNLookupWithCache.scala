@@ -20,14 +20,7 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
    * @param sc Spark context for current application
    */
   def build(sc : SparkContext) = {
-    val length = histogram.collect().length
-    histogram.foreach(println(_))
     val total = histogram.map(tuple => tuple._2).sum()
-    println(total)
-    val n = ((length * 99) / 100).floor.toInt
-/*
-    val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._2 < (n-1)).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
-*/
     val preCache= lshIndex.lookup(histogram.zipWithIndex().filter(el => el._1._2 / total > 0.01).map(el => el._1)).map(el => (el._1, el._3)).collectAsMap().toMap
     cache = sc.broadcast(preCache)
   }
@@ -55,11 +48,26 @@ class NNLookupWithCache(lshIndex : LSHIndex) extends Serializable {
   : (RDD[(List[String], List[(Int, String, List[String])])], RDD[(IndexedSeq[Int], List[String])]) = {
     val signatures = lshIndex.hash(queries)
     //update histogram
-    histogram = signatures.groupBy(el => el._1).mapValues(values => values.size).sortBy(el => el._2, ascending = false)
+    histogram = Option(histogram) match {
+      case Some(prevHistogram) => {
+        val new_values = signatures.groupBy(el => el._1).mapValues(values => values.size).sortBy(el => el._2, ascending = false).map(tuple => (tuple._1, tuple))
+        prevHistogram.map(tuple => (tuple._1, tuple)).fullOuterJoin(new_values).map(result => {
+          var newCount = 0
+          if (result._2._1.isDefined) {
+            newCount += result._2._1.get._2
+          }
+          if (result._2._2.isDefined) {
+            newCount += result._2._2.get._2
+          }
+          (result._1, newCount)
+        })
+      }
+      case None => signatures.groupBy(el => el._1).mapValues(values => values.size).sortBy(el => el._2, ascending = false)
 
+    }
     Option(cache) match {
       case Some(x) =>
-        val cacheHit = signatures.filter(signature => x.value.contains(signature._1)).map(signature => (signature._2, x.value.get(signature._1).get))
+        val cacheHit = signatures.filter(signature => x.value.contains(signature._1)).map(signature => (signature._2, x.value(signature._1)))
         val cacheMiss = signatures.filter(signature => !x.value.contains(signature._1))
         (cacheHit, cacheMiss)
       case None =>
